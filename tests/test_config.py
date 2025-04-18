@@ -88,4 +88,27 @@ def test_settings_validation():
     )
     pinecone_config = settings.get_service_config('pinecone')
     assert 'api_key' in pinecone_config
-    assert 'other_var' not in pinecone_config 
+    assert 'other_var' not in pinecone_config
+
+def test_cors_origins_validation():
+    """Test CORS_ORIGINS validation behavior."""
+    # Test valid JSON string
+    settings = Settings(
+        _env_file=None,
+        CORS_ORIGINS='["http://localhost:3000", "https://example.com"]'
+    )
+    assert settings.CORS_ORIGINS == ["http://localhost:3000", "https://example.com"]
+
+    # Test invalid JSON string (falls back to single-item list)
+    settings = Settings(
+        _env_file=None,
+        CORS_ORIGINS="http://localhost:3000"  # Not valid JSON
+    )
+    assert settings.CORS_ORIGINS == ["http://localhost:3000"]
+
+    # Test list input (should pass through unchanged)
+    settings = Settings(
+        _env_file=None,
+        CORS_ORIGINS=["http://localhost:3000"]
+    )
+    assert settings.CORS_ORIGINS == ["http://localhost:3000"] 

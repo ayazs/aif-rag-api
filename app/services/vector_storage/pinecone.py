@@ -5,10 +5,10 @@ Pinecone vector storage service implementation.
 import time
 import logging
 from typing import List, Optional
-import pinecone
+from pinecone import Pinecone, PineconeException
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.config import settings
+from app.config import Settings
 from app.services.vector_storage.exceptions import (
     VectorStorageError,
     IndexNotFoundError,
@@ -24,15 +24,18 @@ logger = logging.getLogger(__name__)
 class PineconeService:
     """Service for interacting with Pinecone vector database."""
     
-    def __init__(self):
-        """Initialize the Pinecone service."""
+    def __init__(self, settings: Settings):
+        """Initialize the Pinecone service.
+        
+        Args:
+            settings: Application settings instance
+        """
         try:
             config = settings.get_service_config('pinecone')
-            pinecone.init(
+            self.client = Pinecone(
                 api_key=config['api_key'],
                 environment=config['environment']
             )
-            self.client = pinecone
             self.index_name = config.get('index_name', 'aif-rag-index')
         except KeyError as e:
             raise ConfigurationError(f"Missing required Pinecone configuration: {str(e)}")
@@ -77,7 +80,7 @@ class PineconeService:
                 
             logger.info(f"Created index {name} with dimension {dimension} and metric {metric}")
             
-        except pinecone.exceptions.PineconeException as e:
+        except PineconeException as e:
             if "rate limit" in str(e).lower():
                 raise RateLimitError(f"Rate limit exceeded: {str(e)}")
             raise IndexCreationError(f"Failed to create index: {str(e)}")
@@ -107,10 +110,12 @@ class PineconeService:
             self.client.delete_index(name)
             logger.info(f"Deleted index {name}")
             
-        except pinecone.exceptions.PineconeException as e:
+        except PineconeException as e:
             if "rate limit" in str(e).lower():
                 raise RateLimitError(f"Rate limit exceeded: {str(e)}")
             raise IndexDeletionError(f"Failed to delete index: {str(e)}")
+        except IndexNotFoundError:
+            raise
         except Exception as e:
             raise IndexDeletionError(f"Unexpected error deleting index: {str(e)}")
     
