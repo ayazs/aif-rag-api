@@ -27,16 +27,28 @@ test_endpoint() {
 # Test each endpoint
 test_endpoint "/" 404 "Root endpoint (should 404)"
 test_endpoint "/api/v1/test" 200 "Test endpoint"
+test_endpoint "/health" 200 "Health check endpoint"
 test_endpoint "/docs" 200 "Swagger documentation"
 test_endpoint "/openapi.json" 200 "OpenAPI schema"
 
 # Test the response content of the test endpoint
 echo "Testing response content of /api/v1/test"
 response=$(curl -s http://127.0.0.1:8000/api/v1/test)
-expected='{"message":"API is working"}'
+expected='{"data":{"status":"working"},"message":"API is working"}'
 
 if [ "$response" == "$expected" ]; then
     echo -e "${GREEN}✓ Success: Test endpoint returned correct response${NC}"
 else
     echo -e "${RED}✗ Failed: Test endpoint returned unexpected response: $response${NC}"
+fi
+
+# Test the response content of the health check endpoint
+echo "Testing response content of /health"
+response=$(curl -s http://127.0.0.1:8000/health)
+expected='{"data":{"status":"healthy"},"message":"Service is running"}'
+
+if [ "$response" == "$expected" ]; then
+    echo -e "${GREEN}✓ Success: Health endpoint returned correct response${NC}"
+else
+    echo -e "${RED}✗ Failed: Health endpoint returned unexpected response: $response${NC}"
 fi 
