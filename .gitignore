@@ -41,4 +41,9 @@ ENV/
 Thumbs.db
 
 # Project specific
-PR_LAYER_*.md 
+PR_LAYER_*.md
+
+# Test coverage
+.coverage
+htmlcov/
+coverage.xml 

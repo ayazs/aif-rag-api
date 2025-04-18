@@ -36,10 +36,10 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 # Note: In production, replace "*" with specific allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Allows all origins in development
+    allow_credentials=True,  # Allows cookies and authentication headers
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 @app.get("/health", status_code=status.HTTP_200_OK)
