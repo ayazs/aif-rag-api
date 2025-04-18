@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "aif-rag-api"
+version = "0.1.0"
+description = "A FastAPI application for semantic document search powered by OpenAI embeddings and Pinecone vector database"
+authors = ["ayazs"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-dotenv = "^1.0.0"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
