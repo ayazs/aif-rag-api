@@ -22,7 +22,9 @@ def test_api_versioning():
     """Test API versioning structure."""
     response = client.get("/api/v1/test")
     assert response.status_code == 200
-    assert response.json() == {"message": "API is working"}
+    data = response.json()
+    assert data["data"]["status"] == "working"
+    assert data["message"] == "API is working"
 
 def test_docs_endpoints():
     """Test API documentation endpoints."""
