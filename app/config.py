@@ -6,39 +6,62 @@ It uses python-dotenv to load variables from a .env file and provides
 a simple interface to access these settings throughout the application.
 """
 
-import os
+import json
+from typing import List
 from dotenv import load_dotenv
-from typing import Any
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Dictionary to store all settings
-_settings = {}
+class Settings(BaseSettings):
+    """
+    Application settings using Pydantic for type-safe configuration.
+    
+    This class automatically:
+    1. Loads environment variables from .env file
+    2. Validates them against the type hints
+    3. Provides type-safe access to the values
+    
+    Default values are used if environment variables are not set.
+    """
+    
+    # API Settings
+    API_V1_STR: str = "/api/v1"  # Base path for API v1 endpoints
+    PROJECT_NAME: str = "AI Foundation RAG API"  # Name of the project
+    
+    # CORS Settings
+    CORS_ORIGINS: List[str] = ["*"]  # Allowed origins for CORS
+    
+    # Vector Database Settings
+    PINECONE_API_KEY: str  # Pinecone API key
+    PINECONE_ENVIRONMENT: str  # Pinecone environment
+    PINECONE_INDEX_NAME: str  # Pinecone index name
+    
+    # OpenAI Settings
+    OPENAI_API_KEY: str  # OpenAI API key
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"  # OpenAI embedding model
+    
+    @field_validator('CORS_ORIGINS', mode='before')
+    @classmethod
+    def parse_json_list(cls, v):
+        """Parse JSON string into list if necessary."""
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [v]
+        return v
+    
+    # Use ConfigDict instead of class Config
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True
+    )
 
-def _load_settings() -> None:
-    """
-    Load all settings from environment variables dynamically.
-    
-    This function populates the _settings dictionary with all
-    environment variables, making them available through get_setting().
-    """
-    global _settings
-    
-    # Load all environment variables into settings
-    _settings = {key: value for key, value in os.environ.items()}
-
-def get_setting(key: str, default: Any = None) -> Any:
-    """
-    Get a setting value by key.
-    
-    Args:
-        key: The setting key to retrieve
-        default: Default value if key is not found
-        
-    Returns:
-        The setting value or default if not found
-    """
-    if not _settings:
-        _load_settings()
-    return _settings.get(key, default) 
+# Create a single instance of Settings that will be imported throughout the app
+# This instance is created when the module is imported and will contain all
+# the validated settings from environment variables or defaults
+settings = Settings() 

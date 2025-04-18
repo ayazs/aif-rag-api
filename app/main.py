@@ -12,7 +12,7 @@ This module sets up the core FastAPI application with:
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
-from app.config import get_setting
+from app.config import settings
 from app.api.exceptions import (
     validation_exception_handler,
     http_exception_handler,
@@ -33,13 +33,16 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Configure CORS middleware
-# Note: In production, replace "*" with specific allowed origins
+# TODO: Before deploying to production:
+# 1. Replace "*" with specific allowed origins
+# 2. Review and restrict allowed methods and headers
+# 3. Consider enabling credentials if needed for authentication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins in development
-    allow_credentials=True,  # Allows cookies and authentication headers
-    allow_methods=["*"],  # Allows all HTTP methods
-    allow_headers=["*"],  # Allows all headers
+    allow_origins=["*"],  # Allow all origins in development
+    allow_credentials=False,  # Credentials not needed in development
+    allow_methods=["*"],  # Allow all methods in development
+    allow_headers=["*"],  # Allow all headers in development
 )
 
 @app.get("/health", status_code=status.HTTP_200_OK)
@@ -60,4 +63,4 @@ async def health_check():
 
 # Import and include the API v1 router
 from app.api.routes import router as api_router
-app.include_router(api_router, prefix=get_setting('API_V1_STR')) 
+app.include_router(api_router, prefix=settings.API_V1_STR) 
