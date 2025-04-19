@@ -7,7 +7,7 @@ a simple interface to access these settings throughout the application.
 """
 
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
@@ -27,13 +27,24 @@ class Settings(BaseSettings):
     Default values are used if environment variables are not set.
     """
     
-    # API Settings
-    API_V1_STR: str = "/api/v1"  # Base path for API v1 endpoints
-    PROJECT_NAME: str = "AI Foundation RAG API"  # Name of the project
+    PROJECT_NAME: str = "AI Foundation RAG API"
     VERSION: str = "0.1.0"
+    DEBUG: bool = False
     
-    # CORS Settings
-    CORS_ORIGINS: List[str] = ["*"]  # Allowed origins for CORS
+    # API Settings
+    API_V1_STR: str = "/api/v1"
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://your-production-domain.com"]
+    
+    # OpenAI Settings
+    SERVICE_OPENAI_API_KEY: Optional[str] = None
+    SERVICE_OPENAI_EMBEDDING_MODEL: Optional[str] = None
+    SERVICE_OPENAI_CHAT_MODEL: Optional[str] = None
+    
+    # Pinecone Settings
+    SERVICE_PINECONE_API_KEY: Optional[str] = None
+    SERVICE_PINECONE_CLOUD: Optional[str] = "aws"  # Default to AWS cloud
+    SERVICE_PINECONE_REGION: Optional[str] = "us-east-1"  # Default to us-east-1
+    SERVICE_PINECONE_INDEX_NAME: Optional[str] = None
     
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
@@ -54,24 +65,28 @@ class Settings(BaseSettings):
         extra="allow"  # Allow extra fields for service configurations
     )
     
-    def get_service_config(self, service_name: str) -> Dict[str, Any]:
-        """Get configuration for a specific service.
-        
-        Args:
-            service_name: Name of the service (e.g., 'pinecone', 'openai')
-            
-        Returns:
-            Dictionary containing all environment variables for the service
-            with the SERVICE_ prefix removed
-        """
-        prefix = f"SERVICE_{service_name.upper()}_"
+    def get_service_config(self, service: str) -> Dict[str, Any]:
+        """Get configuration for a specific service."""
         config = {}
         
-        for key, value in self.model_dump().items():
-            if key.startswith(prefix) and value is not None:  # Only include non-None values
-                config_key = key[len(prefix):].lower()
-                config[config_key] = value
-        
+        if service == "openai":
+            if self.SERVICE_OPENAI_API_KEY:
+                config["api_key"] = self.SERVICE_OPENAI_API_KEY
+            if self.SERVICE_OPENAI_EMBEDDING_MODEL:
+                config["embedding_model"] = self.SERVICE_OPENAI_EMBEDDING_MODEL
+            if self.SERVICE_OPENAI_CHAT_MODEL:
+                config["chat_model"] = self.SERVICE_OPENAI_CHAT_MODEL
+                
+        elif service == "pinecone":
+            if self.SERVICE_PINECONE_API_KEY:
+                config["api_key"] = self.SERVICE_PINECONE_API_KEY
+            if self.SERVICE_PINECONE_CLOUD:
+                config["cloud"] = self.SERVICE_PINECONE_CLOUD
+            if self.SERVICE_PINECONE_REGION:
+                config["region"] = self.SERVICE_PINECONE_REGION
+            if self.SERVICE_PINECONE_INDEX_NAME:
+                config["index_name"] = self.SERVICE_PINECONE_INDEX_NAME
+                
         return config
 
 # Create a single instance of Settings that will be imported throughout the app

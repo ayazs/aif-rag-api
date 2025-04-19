@@ -72,7 +72,8 @@ def test_settings_validation():
     settings = Settings(
         _env_file=None,  # Don't load .env file
         SERVICE_PINECONE_API_KEY=None,
-        SERVICE_PINECONE_ENVIRONMENT=None,
+        SERVICE_PINECONE_CLOUD=None,
+        SERVICE_PINECONE_REGION=None,
         SERVICE_PINECONE_INDEX_NAME=None,
         SERVICE_OPENAI_API_KEY=None,
         SERVICE_OPENAI_EMBEDDING_MODEL=None

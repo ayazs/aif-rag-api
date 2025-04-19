@@ -28,4 +28,12 @@ class RateLimitError(VectorStorageError):
 
 class ConfigurationError(VectorStorageError):
     """Raised when there are issues with service configuration."""
+    pass
+
+class ServiceTimeoutError(VectorStorageError):
+    """Raised when a service operation times out."""
+    pass
+
+class UnexpectedError(VectorStorageError):
+    """Raised when an unexpected error occurs."""
     pass 
