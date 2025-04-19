@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from app.schemas.responses import ErrorResponse
 
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Handle validation errors from FastAPI and Pydantic.
