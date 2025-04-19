@@ -7,6 +7,7 @@ This module sets up the core FastAPI application with:
 - Exception handlers
 - Health check endpoint
 - API versioning and routing
+- Logging configuration
 """
 
 from fastapi import FastAPI, status, HTTPException
@@ -19,6 +20,11 @@ from app.api.exceptions import (
     generic_exception_handler
 )
 from app.schemas.responses import SuccessResponse
+from app.logging import setup_logging, get_logger
+
+# Initialize logging
+setup_logging(settings)
+logger = get_logger(__name__)
 
 # Initialize FastAPI application with metadata
 app = FastAPI(
@@ -26,6 +32,12 @@ app = FastAPI(
     description="A FastAPI application for semantic document search powered by OpenAI embeddings and Pinecone vector database",
     version="1.0.0"
 )
+
+# Log application startup
+logger.info("Starting application", extra={
+    "version": "1.0.0",
+    "environment": settings.ENVIRONMENT
+})
 
 # Register exception handlers for consistent error responses
 app.add_exception_handler(Exception, generic_exception_handler)
@@ -56,6 +68,7 @@ async def health_check():
     Returns:
         SuccessResponse with health status information
     """
+    logger.debug("Health check requested")
     return SuccessResponse(
         data={"status": "healthy"},
         message="Service is running"

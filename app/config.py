@@ -7,6 +7,7 @@ a simple interface to access these settings throughout the application.
 """
 
 import json
+import os
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Foundation RAG API"
     VERSION: str = "0.1.0"
     DEBUG: bool = False
+    ENVIRONMENT: str = "development"  # development, production
     
     # API Settings
     API_V1_STR: str = "/api/v1"
@@ -46,6 +48,11 @@ class Settings(BaseSettings):
     SERVICE_PINECONE_REGION: Optional[str] = "us-east-1"  # Default to us-east-1
     SERVICE_PINECONE_INDEX_NAME: Optional[str] = None
     
+    # Logging Settings
+    LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_PATH: Optional[str] = "/var/log/aif-rag-api" if ENVIRONMENT == "production" else None
+    LOG_RETENTION_DAYS: int = 30
+    
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
     def parse_json_list(cls, v):
@@ -56,6 +63,15 @@ class Settings(BaseSettings):
             except json.JSONDecodeError:
                 return [v]
         return v
+    
+    @field_validator('LOG_LEVEL', mode='before')
+    @classmethod
+    def validate_log_level(cls, v):
+        """Validate log level is one of the allowed values."""
+        allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if v.upper() not in allowed_levels:
+            raise ValueError(f"Log level must be one of {allowed_levels}")
+        return v.upper()
     
     # Use ConfigDict instead of class Config
     model_config = SettingsConfigDict(
