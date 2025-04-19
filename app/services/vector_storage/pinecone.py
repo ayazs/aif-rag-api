@@ -33,18 +33,24 @@ class PineconeService:
             config: Dictionary containing Pinecone configuration
                    Required keys: api_key
                    Optional keys: cloud, region, index_name
+                   
+        Raises:
+            ConfigurationError: If required configuration is missing or invalid
         """
-        if not config.get("api_key"):
-            raise ValueError("Pinecone API key is required")
+        try:
+            if not config.get("api_key"):
+                raise ConfigurationError("Pinecone API key is required")
+                
+            # Initialize Pinecone client
+            self.client = Pinecone(api_key=config["api_key"])
             
-        # Initialize Pinecone client
-        self.client = Pinecone(api_key=config["api_key"])
-        
-        # Store configuration
-        self.cloud = config.get("cloud", "aws")
-        self.region = config.get("region", "us-east-1")
-        self.index_name = config.get("index_name")
-        
+            # Store configuration
+            self.cloud = config.get("cloud", "aws")
+            self.region = config.get("region", "us-east-1")
+            self.index_name = config.get("index_name")
+        except Exception as e:
+            raise ConfigurationError(f"Failed to initialize Pinecone service: {str(e)}")
+            
     @retry(
         retry=retry_if_exception_type((RateLimitError, ServiceTimeoutError)),
         wait=wait_exponential(multiplier=1, min=4, max=60),
@@ -101,12 +107,13 @@ class PineconeService:
             logger.info(f"Successfully created index {index_name}")
             
         except Exception as e:
-            if "already exists" in str(e).lower():
+            error_msg = str(e).lower()
+            if "already exists" in error_msg:
                 logger.info(f"Index {index_name} already exists")
                 return
-            elif "rate limit" in str(e).lower():
+            elif "rate limit" in error_msg:
                 raise RateLimitError(f"Rate limit exceeded while creating index: {str(e)}")
-            elif "timeout" in str(e).lower():
+            elif "timeout" in error_msg:
                 raise ServiceTimeoutError(f"Service timeout while creating index: {str(e)}")
             else:
                 raise IndexCreationError(f"Failed to create index: {str(e)}")
